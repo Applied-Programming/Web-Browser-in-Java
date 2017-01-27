@@ -3,130 +3,105 @@ package web.browser;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
-import java.net.*;
 import java.io.*;
 import javax.swing.*;
 import javax.swing.event.*;
 
-public class WebBrowser
-{
-	public static void main(String [] args)
-	{
-		JFrame frame = new EditorPaneFrame();
-		frame.show();
-	}
+public class WebBrowser {
+
+    public static void main(String[] args) {
+        JFrame jframe = new EditorPaneFrame();
+        jframe.show();
+    }
 }
-class EditorPaneFrame extends JFrame
-{
 
-	private JTextField url;
-	private JCheckBox editable;
-	private JButton loadButton;
-	private JButton backButton;
-	private JEditorPane editorPane;
-	private Stack urlStack = new Stack();
+class EditorPaneFrame extends JFrame {
 
+    private JTextField url;
+    private JCheckBox editable;
+    private JButton load_button;
+    private JButton back_button;
+    private JEditorPane editor_pane;
+    private Stack url_stack = new Stack();
 
-	public EditorPaneFrame()
-	{
-		setTitle("Java Web Browser");
-		setSize(600,400);
-		addWindowListener(new WindowAdapter()
-		{
-			public void windowClosing(WindowEvent e)
-			{
-				System.exit(0);
-			}
-		} );
+    public EditorPaneFrame() {
+        setTitle("Java Web Browser");
+        setSize(600, 400);
+        addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent e) {
+                System.exit(0);
+            }
+        });
 
-		// set up text field and load button for typing in URL
+        // Set up TextField and load button for typing in URL.
+        url = new JTextField(30);
 
-		url = new JTextField(30);
+        load_button = new JButton("Load");
+        load_button.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent event) {
+                try {
+                    //Push URL onto stack for back button.
+                    url_stack.push(url.getText());
+                    editor_pane.setPage(url.getText());
+                } catch (Exception e) {
+                    editor_pane.setText("Error: " + e);
+                }
+            }
+        });
 
-		loadButton = new JButton("Load");
-		loadButton.addActionListener(new ActionListener()
-		{
-			public void actionPerformed(ActionEvent event)
-			{
-				try
-				{
-					// remember URL for back button
-					urlStack.push(url.getText());
-					editorPane.setPage(url.getText());
-				}
-				catch(Exception e)
-				{
-					editorPane.setText("Error: " +e);
-				}
-			}
-		});
+        back_button = new JButton("Back");
+        back_button.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent event) {
+                if (url_stack.size() <= 1) {
+                    return;
+                }
+                try {
+                    url_stack.pop();
+                    String urlString = (String) url_stack.peek();
+                    url.setText(urlString);
+                    editor_pane.setPage(urlString);
+                } catch (IOException e) {
+                    editor_pane.setText("Error : " + e);
+                }
+            }
+        });
 
-		// set up back button and button action
+        editor_pane = new JEditorPane();
+        editor_pane.setEditable(false);
+        editor_pane.addHyperlinkListener(new HyperlinkListener() {
+            public void hyperlinkUpdate(HyperlinkEvent event) {
+                if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                    try {
+                        url_stack.push(event.getURL().toString());
+                        url.setText(event.getURL().toString());
 
-		backButton = new JButton("Back");
-		backButton.addActionListener(new ActionListener()
-		{
-			public void actionPerformed(ActionEvent event)
-			{
-				if(urlStack.size()<=1) return;
-				try
-				{
-					urlStack.pop();
-					String urlString = (String)urlStack.peek();
-					url.setText(urlString);
-					editorPane.setPage(urlString);
-				}
-				catch(IOException e)
-				{
-					editorPane.setText("Error : " +e);
-				}
-			}
-		});
+                        editor_pane.setPage(event.getURL());
+                    } catch (IOException e) {
+                        editor_pane.setText("Error: " + e);
+                    }
+                }
+            }
+        });
 
-		editorPane = new JEditorPane();
-		editorPane.setEditable(false);
-		editorPane.addHyperlinkListener(new HyperlinkListener()
-		{
-			public void hyperlinkUpdate(HyperlinkEvent event)
-			{
-				if(event.getEventType() == HyperlinkEvent.EventType.ACTIVATED)
-				{
-					try
-					{
-						urlStack.push(event.getURL().toString());
-						url.setText(event.getURL().toString());
+        editable = new JCheckBox();
+        editable.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent event) {
+                editor_pane.setEditable(editable.isSelected());
+            }
+        });
 
-						editorPane.setPage(event.getURL());
-					}
-					catch(IOException e)
-					{
-						editorPane.setText("Error: " + e);
-					}
-				}
-			}
-		});
+        Container contentPane = getContentPane();
+        contentPane.add(new JScrollPane(editor_pane), "Center");
 
-		editable = new JCheckBox();
-		editable.addActionListener(new ActionListener()
-		{
-			public void actionPerformed(ActionEvent event)
-			{
-				editorPane.setEditable(editable.isSelected());
-			}
-		});
+        JPanel panel = new JPanel();
+        panel.add(new JLabel("URL"));
+        panel.add(url);
+        panel.add(load_button);
+        panel.add(back_button);
+        panel.add(new JLabel("Editable"));
+        panel.add(editable);
 
-		Container contentPane = getContentPane();
-		contentPane.add(new JScrollPane(editorPane), "Center");
-
-		JPanel panel = new JPanel();
-		panel.add(new JLabel("URL"));
-		panel.add(url);
-		panel.add(loadButton);
-		panel.add(backButton);
-		panel.add(new JLabel("Editable"));
-		panel.add(editable);
-
-		contentPane.add(panel,"South");
-	}
+        contentPane.add(panel, "South");
+    }
 
 }
